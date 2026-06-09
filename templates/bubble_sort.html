@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bubble Sort</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;1,400&family=Inter:wght@400;500&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/bubble_sort.css">
+</head>
+
+<body>
+
+    <header>
+        <h1>Bubble sort</h1>
+        <div class="input-area">
+            <div class="array-input-wrap">
+                <input type="text" id="array-input" value="{{ default_array | join(', ') }}"
+                    placeholder="e.g. 5, 2, 8, 1, 9, 3" aria-label="Array input">
+                <div class="input-hint">Enter comma-separated integers, e.g. 5, 2, 8</div>
+            </div>
+
+            <input type="number" id="insert-value" class="mini-input" placeholder="Value" aria-label="Insert value">
+            <input type="number" id="insert-index" class="mini-input mini-index" placeholder="Index" min="0"
+                aria-label="Insert index">
+            <button class="btn-secondary" id="btn-insert" type="button" title="Insert value at index"
+                aria-label="Insert">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M11 11V6h2v5h5v2h-5v5h-2v-5H6v-2z" />
+                </svg>Insert
+            </button>
+
+            <input type="number" id="remove-index" class="mini-input mini-index" placeholder="Index" min="0"
+                aria-label="Remove index">
+            <button class="btn-secondary" id="btn-remove" type="button" title="Remove value at index"
+                aria-label="Remove">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
+                </svg>Remove
+            </button>
+
+            <button class="btn-secondary" id="btn-randomize" type="button" title="Fill with random numbers"
+                aria-label="Randomize">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M4 7h2l3 5 4-8 7 12h-2l-5-8-4 8L6 7H4z" />
+                </svg>Randomize
+            </button>
+
+            <button class="btn-visualize" onclick="visualize()">Visualize</button>
+
+        </div>
+    </header>
+
+    <main>
+        <div class="array-container" id="array-container">
+            {% for n in default_array %}
+            <div class="card in-place">{{ n }}</div>
+            {% endfor %}
+        </div>
+        <p class="sorted-label" id="sorted-label">Sorted: {{ default_sorted | join(', ') }}.</p>
+    </main>
+
+    <div class="control-bar">
+        <div class="control-bar-inner">
+            <div class="controls-row">
+
+                <div class="control-buttons">
+                    <!-- Reset button -->
+                    <button class="btn-control" id="btn-reset" title="Reset">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z" />
+                        </svg>
+                    </button>
+                    <!-- Step back -->
+                    <button class="btn-control" id="btn-back" title="Step back">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M6 6h2v12H6zm3.5 6 8.5 6V6z" />
+                        </svg>
+                    </button>
+                    <!-- Play / Pause -->
+                    <button class="btn-control btn-play" id="btn-play" title="Play">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M8 5v14l11-7z" />
+                        </svg>
+                    </button>
+                    <!-- Step forward -->
+                    <button class="btn-control" id="btn-forward" title="Step forward">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" />
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="speed-control">
+                    <span class="speed-label">SLOW</span>
+                    <input type="range" class="speed-slider" min="1" max="10" value="8">
+                    <span class="speed-label">FAST</span>
+                </div>
+
+                <div class="step-counter" id="step-counter">0 / {{ default_steps_len }}</div>
+
+                <button class="btn-show-code">
+                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <polyline points="16 18 22 12 16 6" />
+                        <polyline points="8 6 2 12 8 18" />
+                    </svg>
+                    Show code
+                </button>
+
+            </div>
+        </div>
+
+        <div class="legend">
+            <span class="legend-item comparing">
+                <span class="legend-dot"></span>
+                comparing
+            </span>
+            <span class="legend-item swapping">
+                <span class="legend-dot"></span>
+                swapping
+            </span>
+            <span class="legend-item in-place">
+                <span class="legend-dot"></span>
+                in place
+            </span>
+        </div>
+    </div>
+
+    <script>
+        let allSteps = [];
+        let currentIndex = 0;
+        let isPlaying = false;
+        let playTimer = null;
+
+        function parseArrayInput() {
+            const input = document.getElementById('array-input').value;
+            return input.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+        }
+
+        function setArrayInput(nums) {
+            document.getElementById('array-input').value = nums.join(', ');
+        }
+
+        function renderPreview(nums) {
+            const container = document.getElementById('array-container');
+            container.innerHTML = nums.length
+                ? nums.map(n => `<div class="card in-place">${n}</div>`).join('')
+                : '<div class="empty-state">No numbers yet. Add values, then visualize.</div>';
+            document.getElementById('sorted-label').textContent = 'Ready to visualize.';
+            document.getElementById('step-counter').textContent = '0 / 0';
+            allSteps = [];
+            currentIndex = 0;
+            stopPlay();
+        }
+
+        function getDelay() {
+            const v = parseInt(document.querySelector('.speed-slider').value);
+            return 1500 - (v - 1) * 155;
+        }
+
+        function setPlayIcon(playing) {
+            document.getElementById('btn-play').innerHTML = playing
+                ? '<svg viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>'
+                : '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+        }
+
+        function render(index) {
+            const container = document.getElementById('array-container');
+            if (allSteps.length === 0) return;
+
+            if (index >= allSteps.length) {
+                const last = allSteps[allSteps.length - 1].array;
+                container.innerHTML = last.map(n => `<div class="card in-place">${n}</div>`).join('');
+                document.getElementById('sorted-label').textContent = `Sorted: ${last.join(', ')}.`;
+                document.getElementById('step-counter').textContent = `${allSteps.length} / ${allSteps.length}`;
+                stopPlay();
+                return;
+            }
+
+            const step = allSteps[index];
+            container.innerHTML = step.array.map((n, i) => {
+                let cls = 'in-place';
+                if (step.comparing.includes(i)) cls = step.swapped ? 'swapping' : 'comparing';
+                return `<div class="card ${cls}">${n}</div>`;
+            }).join('');
+            document.getElementById('step-counter').textContent = `${index + 1} / ${allSteps.length}`;
+        }
+
+        function stopPlay() {
+            isPlaying = false;
+            clearTimeout(playTimer);
+            setPlayIcon(false);
+        }
+
+        document.getElementById('btn-insert').addEventListener('click', () => {
+            const value = parseInt(document.getElementById('insert-value').value, 10);
+            const index = parseInt(document.getElementById('insert-index').value, 10);
+            if (isNaN(value) || isNaN(index)) return;
+
+            const nums = parseArrayInput();
+            const safeIndex = Math.max(0, Math.min(index, nums.length));
+            nums.splice(safeIndex, 0, value);
+            setArrayInput(nums);
+            renderPreview(nums);
+        });
+
+        document.getElementById('btn-remove').addEventListener('click', () => {
+            const index = parseInt(document.getElementById('remove-index').value, 10);
+            if (isNaN(index)) return;
+
+            const nums = parseArrayInput();
+            if (index < 0 || index >= nums.length) return;
+
+            nums.splice(index, 1);
+            setArrayInput(nums);
+            renderPreview(nums);
+        });
+
+        document.getElementById('btn-randomize').addEventListener('click', () => {
+            const current = parseArrayInput();
+            const size = current.length || 6;
+            const nums = Array.from({ length: size }, () => Math.floor(Math.random() * 99) + 1);
+            setArrayInput(nums);
+            renderPreview(nums);
+        });
+
+        function tick() {
+            if (!isPlaying) return;
+            render(currentIndex);
+            currentIndex++;
+            if (currentIndex > allSteps.length) { stopPlay(); return; }
+            playTimer = setTimeout(tick, getDelay());
+        }
+
+        document.getElementById('btn-reset').addEventListener('click', () => {
+            stopPlay();
+            currentIndex = 0;
+            render(0);
+        });
+
+        document.getElementById('btn-back').addEventListener('click', () => {
+            stopPlay();
+            if (currentIndex > 0) currentIndex--;
+            render(currentIndex);
+        });
+
+        document.getElementById('btn-play').addEventListener('click', () => {
+            if (allSteps.length === 0) return;
+            if (currentIndex >= allSteps.length) currentIndex = 0;
+            isPlaying = !isPlaying;
+            setPlayIcon(isPlaying);
+            if (isPlaying) tick();
+            else clearTimeout(playTimer);
+        });
+
+        document.getElementById('btn-forward').addEventListener('click', () => {
+            stopPlay();
+            if (currentIndex < allSteps.length) {
+                render(currentIndex);
+                currentIndex++;
+            }
+        });
+
+        async function visualize() {
+            const nums = parseArrayInput();
+            stopPlay();
+            currentIndex = 0;
+
+            if (nums.length === 0) {
+                allSteps = [];
+                document.getElementById('array-container').innerHTML = '<div class="empty-state">No numbers yet. Add values, then visualize.</div>';
+                document.getElementById('sorted-label').textContent = 'No numbers to sort.';
+                document.getElementById('step-counter').textContent = '0 / 0';
+                return;
+            }
+
+            const res = await fetch('/api/bubble_sort', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ array: nums })
+            });
+            allSteps = await res.json();
+            document.getElementById('step-counter').textContent = `0 / ${allSteps.length}`;
+            render(0);
+        }
+    </script>
+
+</body>
+
+</html>
