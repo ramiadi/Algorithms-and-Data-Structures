@@ -14,7 +14,13 @@ def hello():
 
 @app.route("/bubble_sort")
 def bubble_sort_page():
-    return render_template("bubble_sort.html")
+    default = [5, 2, 8, 1, 9, 3]
+    steps = bubble_sort(default)
+    sorted_arr = steps[-1]["array"] if steps else default
+    return render_template("bubble_sort.html",
+                           default_array=default,
+                           default_sorted=sorted_arr,
+                           default_steps_len=len(steps))
 
 @app.route("/api/bubble_sort", methods=["POST"])
 def bubble_sort_api():

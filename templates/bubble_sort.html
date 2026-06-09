@@ -17,21 +17,19 @@
     <header>
         <h1>Bubble sort</h1>
         <div class="input-area">
-            <input type="text" id="array-input" value="5, 2, 8, 1, 9, 3" placeholder="e.g. 5, 2, 8, 1, 9, 3">
+            <input type="text" id="array-input" value="{{ default_array | join(', ') }}"
+                placeholder="e.g. 5, 2, 8, 1, 9, 3">
             <button class="btn-visualize" onclick="visualize()">Visualize</button>
         </div>
     </header>
 
     <main>
         <div class="array-container" id="array-container">
-            <div class="card in-place">1</div>
-            <div class="card in-place">2</div>
-            <div class="card in-place">3</div>
-            <div class="card in-place">5</div>
-            <div class="card in-place">8</div>
-            <div class="card in-place">9</div>
+            {% for n in default_array %}
+            <div class="card in-place">{{ n }}</div>
+            {% endfor %}
         </div>
-        <p class="sorted-label" id="sorted-label">Sorted: 1, 2, 3, 5, 8, 9.</p>
+        <p class="sorted-label" id="sorted-label">Sorted: {{ default_sorted | join(', ') }}.</p>
     </main>
 
     <div class="control-bar">
@@ -72,7 +70,7 @@
                     <span class="speed-label">FAST</span>
                 </div>
 
-                <div class="step-counter" id="step-counter">38 / 38</div>
+                <div class="step-counter" id="step-counter">0 / {{ default_steps_len }}</div>
 
                 <button class="btn-show-code">
                     <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
