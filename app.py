@@ -29,4 +29,7 @@ def bubble_sort_api():
     return jsonify(steps)
 
 if __name__ == '__main__':
+    import os
+    print('CWD:', os.getcwd())
+    print('Template folder:', app.template_folder)
     app.run(host='0.0.0.0', debug=True)
