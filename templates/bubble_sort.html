@@ -17,9 +17,40 @@
     <header>
         <h1>Bubble sort</h1>
         <div class="input-area">
-            <input type="text" id="array-input" value="{{ default_array | join(', ') }}"
-                placeholder="e.g. 5, 2, 8, 1, 9, 3">
+            <div class="array-input-wrap">
+                <input type="text" id="array-input" value="{{ default_array | join(', ') }}"
+                    placeholder="e.g. 5, 2, 8, 1, 9, 3" aria-label="Array input">
+                <div class="input-hint">Enter comma-separated integers, e.g. 5, 2, 8</div>
+            </div>
+
+            <input type="number" id="insert-value" class="mini-input" placeholder="Value" aria-label="Insert value">
+            <input type="number" id="insert-index" class="mini-input mini-index" placeholder="Index" min="0"
+                aria-label="Insert index">
+            <button class="btn-secondary" id="btn-insert" type="button" title="Insert value at index"
+                aria-label="Insert">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M11 11V6h2v5h5v2h-5v5h-2v-5H6v-2z" />
+                </svg>Insert
+            </button>
+
+            <input type="number" id="remove-index" class="mini-input mini-index" placeholder="Index" min="0"
+                aria-label="Remove index">
+            <button class="btn-secondary" id="btn-remove" type="button" title="Remove value at index"
+                aria-label="Remove">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
+                </svg>Remove
+            </button>
+
+            <button class="btn-secondary" id="btn-randomize" type="button" title="Fill with random numbers"
+                aria-label="Randomize">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M4 7h2l3 5 4-8 7 12h-2l-5-8-4 8L6 7H4z" />
+                </svg>Randomize
+            </button>
+
             <button class="btn-visualize" onclick="visualize()">Visualize</button>
+
         </div>
     </header>
 
@@ -105,6 +136,27 @@
         let isPlaying = false;
         let playTimer = null;
 
+        function parseArrayInput() {
+            const input = document.getElementById('array-input').value;
+            return input.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+        }
+
+        function setArrayInput(nums) {
+            document.getElementById('array-input').value = nums.join(', ');
+        }
+
+        function renderPreview(nums) {
+            const container = document.getElementById('array-container');
+            container.innerHTML = nums.length
+                ? nums.map(n => `<div class="card in-place">${n}</div>`).join('')
+                : '<div class="empty-state">No numbers yet. Add values, then visualize.</div>';
+            document.getElementById('sorted-label').textContent = 'Ready to visualize.';
+            document.getElementById('step-counter').textContent = '0 / 0';
+            allSteps = [];
+            currentIndex = 0;
+            stopPlay();
+        }
+
         function getDelay() {
             const v = parseInt(document.querySelector('.speed-slider').value);
             return 1500 - (v - 1) * 155;
@@ -144,6 +196,38 @@
             setPlayIcon(false);
         }
 
+        document.getElementById('btn-insert').addEventListener('click', () => {
+            const value = parseInt(document.getElementById('insert-value').value, 10);
+            const index = parseInt(document.getElementById('insert-index').value, 10);
+            if (isNaN(value) || isNaN(index)) return;
+
+            const nums = parseArrayInput();
+            const safeIndex = Math.max(0, Math.min(index, nums.length));
+            nums.splice(safeIndex, 0, value);
+            setArrayInput(nums);
+            renderPreview(nums);
+        });
+
+        document.getElementById('btn-remove').addEventListener('click', () => {
+            const index = parseInt(document.getElementById('remove-index').value, 10);
+            if (isNaN(index)) return;
+
+            const nums = parseArrayInput();
+            if (index < 0 || index >= nums.length) return;
+
+            nums.splice(index, 1);
+            setArrayInput(nums);
+            renderPreview(nums);
+        });
+
+        document.getElementById('btn-randomize').addEventListener('click', () => {
+            const current = parseArrayInput();
+            const size = current.length || 6;
+            const nums = Array.from({ length: size }, () => Math.floor(Math.random() * 99) + 1);
+            setArrayInput(nums);
+            renderPreview(nums);
+        });
+
         function tick() {
             if (!isPlaying) return;
             render(currentIndex);
@@ -182,10 +266,18 @@
         });
 
         async function visualize() {
-            const input = document.getElementById('array-input').value;
-            const nums = input.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+            const nums = parseArrayInput();
             stopPlay();
             currentIndex = 0;
+
+            if (nums.length === 0) {
+                allSteps = [];
+                document.getElementById('array-container').innerHTML = '<div class="empty-state">No numbers yet. Add values, then visualize.</div>';
+                document.getElementById('sorted-label').textContent = 'No numbers to sort.';
+                document.getElementById('step-counter').textContent = '0 / 0';
+                return;
+            }
+
             const res = await fetch('/api/bubble_sort', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
